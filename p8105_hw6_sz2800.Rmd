@@ -1,0 +1,38 @@
+---
+title: "p8105_hw6_sz2800"
+author: "Stephanie Zhen"
+date: "11/25/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+## Q1: Baby's birthweight
+
+Cleaning data.
+```{r}
+hw6_bw = read.csv("./data/birthweight.csv")
+
+bw_clean = hw6_bw %>% 
+  janitor::clean_names() %>% 
+  mutate(babysex = ifelse(babysex == 1, "male", "female"),
+        babysex = as.factor(babysex)) %>% 
+  mutate(frace = as.factor(frace),
+         frace = recode_factor(frace, '1' = "white", '2' = "black", '3' = "asian", '4' = "puerto rican", '8' = "other", '9' = "unknown")) %>% 
+  mutate(malform = ifelse(malform == 0, "absent", "present"),
+         malform = as.factor(malform)) %>% 
+  mutate(mrace = as.factor(mrace),
+         mrace = recode_factor(mrace, '1' = "white", '2' = "black", '3' = "asian", '4' = "puerto rican", '8' = "other"))
+
+
+summary(bw_clean)
+```
+
+Recoded the baby's sex, father's race, mother's race, and malform into factor variables and appropriate labels. There doesn't seem to have any NA's in this dataset. 
