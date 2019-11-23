@@ -12,6 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(modelr)
+library(mgcv)
+library(purrr)
 ```
 
 ## Q1: Baby's birthweight
@@ -36,3 +39,64 @@ summary(bw_clean)
 ```
 
 Recoded the baby's sex, father's race, mother's race, and malform into factor variables and appropriate labels. There doesn't seem to have any NA's in this dataset. 
+
+Model building for outcome birthweights
+```{r}
+bw_fit = lm(bwt ~ babysex + ppbmi + gaweeks + smoken + blength, data = bw_clean) 
+bw_fit %>% 
+  broom::tidy() %>% 
+  select(term, estimate, p.value)
+
+bw_fit
+```
+
+Inital online research shows that mother's BMI, gender of baby, length of pregnancy, and mother's lifestyle, length of baby are known factors that can influence the birthweight of the baby. Therefore, for the model buliding, I use the variables, babysex, ppbmi, gaweeks, smoken, blength as predictors for the outcome, birthweight, bwt. Since birthweight is a continuous outcome, I will use linear regression. 
+
+
+Prediction and residual plot
+```{r}
+bw_resid = bw_clean %>% 
+  modelr::add_residuals(bw_fit)
+
+bw_pred = bw_clean %>% 
+  modelr::add_predictions(bw_fit) %>% 
+  select(pred)
+
+bw_resid_pred = cbind(bw_resid, bw_pred)
+
+bw_pred_resid_plot = ggplot(bw_resid_pred , aes(x = pred, y = resid)) +
+  geom_point()
+
+bw_pred_resid_plot
+```
+
+
+Model 2: using length at birth and gestational age as predictors (main effects only):
+```{r}
+bw_meffect = lm(bwt ~ gaweeks + blength, data = bw_clean) 
+bw_meffect %>% 
+  broom::tidy() %>% 
+  select(term, estimate, p.value)
+
+bw_meffect
+```
+
+
+Model 3: using head circumference, length, sex, and all interactions (including the three-way interaction).
+```{r}
+bw_interact = lm(bwt ~ bhead + blength + babysex + (bhead * blength) + (bhead * babysex) + (blength * babysex) + (bhead * blength * babysex), data = bw_clean) 
+bw_interact %>% 
+  broom::tidy() %>% 
+  select(term, estimate, p.value)
+
+bw_interact
+```
+
+In order to correctly define a three way interaction, I must also include all the two way interaction terms and main effects as well. 
+
+
+Comparing my model with the model with just the main effects and model with the three way interaction. 
+```{r}
+
+```
+
