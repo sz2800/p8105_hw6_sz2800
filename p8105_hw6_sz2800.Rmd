@@ -183,22 +183,24 @@ log_beta_pre = weather_df %>%
   select(-std.error, -statistic, -p.value) %>% 
   pivot_wider(
     names_from = term,
-    values_from = estimate)
+    values_from = estimate) %>% 
+  janitor::clean_names() %>% 
+  mutate(log_bvalue = log(intercept * tmin))
 
-names = c("id", "beta0", "tmin")
-colnames(log_beta_pre) = names
-
-log_beta = log_beta_pre %>% 
-  mutate(log_bvalue = log(beta0 * tmin))
-
-log_beta_plot = log_beta %>% 
+log_beta_plot = log_beta_pre %>% 
   ggplot(aes(x = log_bvalue)) +
   geom_density()
 
 log_beta_plot
+
+log_beta_int = log_beta_pre %>% 
+  pull(log_bvalue) %>% 
+  quantile(., probs = c(0.025, 0.975, 0.95), na.rm = TRUE)
+
+log_beta_int
 ```
 
-
+R^2 95% confidence interval and denisty plot. 
 ```{r}
 r2_pre = weather_df %>% 
   modelr::bootstrap(n = 1000) %>% 
@@ -206,12 +208,19 @@ r2_pre = weather_df %>%
     models = map(strap, ~lm(tmax ~ tmin, data = .x)),
     results = map(models, broom::glance)) %>% 
   select(-strap, -models) %>% 
-  unnest(results)
+  unnest(results) %>% 
+  janitor::clean_names()
 
 r2_plot = r2_pre %>% 
-  ggplot(aes(x = r.squared)) +
+  ggplot(aes(x = r_squared)) +
   geom_density()
 
 r2_plot
+
+r2_int = r2_pre %>% 
+  pull(r_squared) %>% 
+  quantile(., probs = c(0.025, 0.975, 0.95), na.rm = TRUE)
+
+r2_int
 ```
 
