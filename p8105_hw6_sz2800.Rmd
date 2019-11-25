@@ -39,6 +39,7 @@ summary(bw_clean)
 
 Recoded the baby's sex, father's race, mother's race, and malform into factor variables and appropriate labels. There doesn't seem to have any NA's in this dataset. 
 
+
 Model building for outcome birthweights
 ```{r}
 bw_fit = lm(bwt ~ babysex + ppbmi + gaweeks + smoken + blength, data = bw_clean) 
@@ -64,10 +65,13 @@ bw_pred = bw_clean %>%
 bw_resid_pred = cbind(bw_resid, bw_pred)
 
 bw_pred_resid_plot = ggplot(bw_resid_pred, aes(x = pred, y = resid)) +
-  geom_point()
+  geom_point() + 
+  labs(x = 'Predicted values', y = 'Residuals', 
+       title = 'Plot of predicted values vs Residuals')
 
 bw_pred_resid_plot
 ```
+The spread of the residuals is not constant. Although most are centered at 0, there seems to be observations that are above 1000. It might be a better idea to graph standardized residuals than just residuals itself. 
 
 
 Model 2: using length at birth and gestational age as predictors (main effects only):
@@ -117,6 +121,7 @@ bw_cv = bw_cv %>%
   )
 ```
 
+
 Prepping for graphing root mean square error and plotting it
 ```{r}
 bw_cv_pre = bw_cv %>% 
@@ -127,12 +132,11 @@ bw_cv_pre = bw_cv %>%
     values_to = "rmse",
     names_prefix = "rmse_")
 
-
-
 bw_cv_plot = 
   ggplot(bw_cv_pre, aes(x = model, y = rmse)) + 
-  geom_violin()
-
+  geom_violin() +
+  labs(x = 'Models', y = 'Root mean square error (RMSE)', 
+       title = 'Comparing models using RMSE')
 
 bw_cv_plot
 ```
@@ -167,7 +171,6 @@ weather_mod = lm(tmax ~ tmin, data = weather_df) %>%
 boot_sample = function(df) {
   sample_frac(df, replace = TRUE)
 }
-
 ```
 
 
@@ -188,6 +191,8 @@ log_beta_pre = weather_df %>%
   mutate(log_bvalue = log(intercept * tmin))
 ```
 
+
+
 95% confidence interval for log(beta0 * beta1)
 ```{r}
 log_beta_int = log_beta_pre %>% 
@@ -196,27 +201,29 @@ log_beta_int = log_beta_pre %>%
 
 log_beta_int
 mean(log_beta_int)
-
 ```
-The mean of log(beta0 * beta1) is centered at 2.02 with a 95% confidence interval of (1.9649, 2.051).
+
+The mean of log(beta0 * beta1) is centered at 2.02 with a 95% confidence interval of (1.9649, 2.0586).
 
 
 
 ```{r}
 log_beta_plot = log_beta_pre %>% 
   ggplot(aes(x = log_bvalue)) +
-  geom_density()
-
+  geom_density() +
+  labs(x = 'log(beta0 * beta1)', y = 'Density', 
+       title = "Hisotgram of log(beta0 * beta1)")
+       
 log_beta_plot
 ```
 
-The log(beta0 * beta1) is a symmtrical bell shaped curve that follows a normal distribution. This is most likely because of the large bootstrap sample of 500 samples. It is centered around 2.02 with 95% confidence interval of (1.9649, 2.051).
+The log(beta0 * beta1) is a symmtrical bell shaped curve that follows a normal distribution. This is most likely because of the large bootstrap sample of 500 samples. It is centered around 2.02 with 95% confidence interval of (1.9649, 2.0586).
 
 
 R^2 95% confidence interval and denisty plot. 
 ```{r}
 r2_pre = weather_df %>% 
-  modelr::bootstrap(n = 1000) %>% 
+  modelr::bootstrap(n = 5000) %>% 
   mutate(
     models = map(strap, ~lm(tmax ~ tmin, data = .x)),
     results = map(models, broom::glance)) %>% 
@@ -226,7 +233,9 @@ r2_pre = weather_df %>%
 
 r2_plot = r2_pre %>% 
   ggplot(aes(x = r_squared)) +
-  geom_density()
+  geom_density() +
+  labs(x = 'R-squared', y = 'Density', 
+       title = "Hisotgram of R-squared")
 
 r2_plot
 
@@ -239,4 +248,4 @@ mean(r2_int)
 ```
 
 The histogram of the r^2 values is bell shaped and looks like it skews left very slightly.
-The mean is centered at 0.9152 with 95% confidence interval (0.8948, 0.9264).
+The mean is centered at 0.9152 with 95% confidence interval (0.8948, 0.927).
